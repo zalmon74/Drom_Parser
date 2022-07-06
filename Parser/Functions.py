@@ -1,4 +1,4 @@
-from requests import get, Response
+from requests import get, Response, exceptions
 
 
 def get_request(url: str, headers: dict, parameters: dict = None) -> Response:
@@ -9,7 +9,7 @@ def get_request(url: str, headers: dict, parameters: dict = None) -> Response:
     :param parameters: словарь с параметрами
     :return:
     """
-    response = get(url, headers=headers, params=parameters)
+    response = get(url, headers=headers, params=parameters, allow_redirects=False)
     return response
 
 

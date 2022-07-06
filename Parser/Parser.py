@@ -1,3 +1,5 @@
+import inspect
+
 from bs4 import BeautifulSoup
 from bs4.element import Tag as bs4_Tag
 
@@ -6,6 +8,7 @@ from .Functions import get_request, print_sorted_dict_with_separator
 from .ConstantsUrls import *
 from .Constants import *
 from .Errors import Errors
+import GET_Parameters as GetPar
 
 
 class DromParser:
@@ -310,7 +313,7 @@ class DromParser:
             if isinstance(url_model, str):
                 lst_str = url_model.split('/')
                 # Так как URL заканчивается символом '/', то последний элемент будет пустой,
-                # необходимо брать предпослдений
+                # необходимо брать предпоследний
                 model_auto = lst_str[-2]
                 # Формируем выходной URL
                 output = url_marque + f'{model_auto}/'
@@ -339,7 +342,7 @@ class DromParser:
             if isinstance(url_marque, str):
                 lst_str = url_marque.split('/')
                 # Так как URL заканчивается символом '/', то последний элемент будет пустой,
-                # необходимо брать предпослдений
+                # необходимо брать предпоследний
                 name_marque = lst_str[-2]
                 output = url_city.replace('auto', name_marque)
             else:
@@ -350,7 +353,7 @@ class DromParser:
 
     def _get_url_with_adds_for_city_marque_model(self, city: str, marque: str, model: str):
         """
-        Метод получения URL c объявленими в определенном городе с определенной маркой и моделью авто
+        Метод получения URL c объявлениями в определенном городе с определенной маркой и моделью авто
         :param city: Город
         :param marque: Марка авто
         :param model: Модель авто
@@ -382,15 +385,53 @@ class DromParser:
             output = url_city_marque
         return output
 
+    def _set_list_available_get_parameters(self):
+        """
+        Метод формирует список с доступными объектами get-параметров для запроса
+        """
+        # Определяем какие существуют get-параметры
+        l_parameters = inspect.getmembers(GetPar, inspect.isclass)
+        # Оставляем только их объекты
+        self._l_available_get_parameters = list()
+        for name, obj in l_parameters:
+            self._l_available_get_parameters.append(obj)
+        # Убираем вспомогательные объекты типа базового класса и тп.
+        self._l_available_get_parameters.remove(GetPar.BaseParameter)
+        self._l_available_get_parameters.remove(GetPar.datetime)
+
+    def _add_getparameter(self, parameter: GetPar.BaseParameter, value: int | list):
+        """
+        Метод добавляет GET-параметр в словарь
+        :param parameter: Объект параметра, который необходимо добавить в запрос
+        :param value: значение или значения, которые содержит данный параметр
+        :return: None - успешное выполнение
+                 ERROR_INCORRECT_ARGUMENT_FOR_GET_PARAMETER - ОШИБКА: Данный параметр не может иметь такой аргумент
+        """
+        output = None
+        if value in parameter.get_list_parameters() or parameter.is_arbitrary_arg():
+            self.d_parameters[parameter.get_name_str()] = value
+        else:
+            output = Errors.ERROR_INCORRECT_ARGUMENT_FOR_GET_PARAMETER
+        return output
+
     def __init__(self):
+        # Список с доступными объектами get-параметров для запроса
+        self._l_available_get_parameters = None
+
         self.response = None  # Объект с ответом на запрос (последний)
         self.soup_obj = None  # Спарсеный объект (soup) (последний)
         self.d_city_href = None  # Словарь: key = город, data = href - URL с объявлениями этого города
         self.d_marque_href = None  # Словарь: key = марка, data = href - URL со всеми доступными моделями авто
         self.d_model_href = None  # Словарь: key = модель автомобиля, data = href - URL с описанием данной модели
+        self.d_parameters = dict()  # Словарь с доп. параметрами: key = имя параметра, data = значение или значения
         self.current_url = None  # Текущий URL
         self.current_marque = None  # Выбранная марка автомобиля
         self.current_model = None  # Выбранная модель автомобиля
+
+        # Заполняем список с get-параметрами для запросов
+        self._set_list_available_get_parameters()
+
+    # Геттеры
 
     def get_available_cities(self) -> list:
         """
@@ -424,9 +465,10 @@ class DromParser:
 
     def get_available_models(self, marque: str) -> list:
         """
-        Метод возращает список доступных моделей для соответствующей марки автомобиля
+        Метод возвращает список доступных моделей для соответствующей марки автомобиля
         :param marque: марка автомобиля
         :return: список доступных моделей для соответствующей марки автомобиля
+                 ERROR_INCORRECT_MARQUE_AUTO - ОШИБКА: задана несуществующая марка автомобиля
         """
 
         # Если словарь не заполнен, вызываем метод его заполнения
@@ -442,25 +484,67 @@ class DromParser:
             output = error
         return output
 
-    def get_url_with_ads(self, city: str = None, marque: str = None, model: str = None):
+    def get_url_with_ads(self, city: str = None, marque: str = None, model: str = None, f_with_params: bool = None):
         """
         Метод получения URL с объявлениями с заданными параметрами
         :param city: Город, если None - поиск во всех городах
         :param marque: Марка авто, если None - поиск всех марок
         :param model:  Модель авто, если None - поиск всех моделей (поиск только модели не работает без марки)
+        :param f_with_params: Флаг запроса с GET-параметрами, которые ранее были установлены
+                              True = с параметрами, False = без параметров
         :return: Сформированную ссылку или
                  ERROR_INCORRECT_MARQUE_AUTO - ОШИБКА: задана несуществующая марка автомобиля
                  ERROR_INCORRECT_MODEL_AUTO - ОШИБКА: задана несуществующая модель авто
                  ERROR_INCORRECT_CITY - ОШИБКА: задан несуществующий город
                  ERROR_MODEL_WITHOUT_MARQUE - ОШИБКА: задана модель без марки авто
         """
-
         error = self._set_curr_url(city, marque, model)
         if error is None:
+            if f_with_params:
+                response = get_request(self.current_url, HEADERS, self.d_parameters)
+                if response.ok:
+                    self.current_url = response.url
             output = self.current_url
         else:
             output = error
         return output
+
+    # Сеттеры
+
+    def set_getparameter(self, parameter: GetPar.BaseParameter, value: int | list):
+        """
+        Метод добавления (установки) get-параметра для запроса
+        :param parameter: Объект параметра, который необходимо добавить в запрос
+        :param value: значение или значения, которые содержит данный параметр
+        :return: None - успешное завершение
+                 ERROR_INCORRECT_GET_PARAMETER - ОШИБКА: Заданный параметр отсутствует или недоступен
+                 ERROR_INCORRECT_COUNT_ARG_FOR_GET_PARAMETER - ОШИБКА: Данный параметр может иметь только один арг.
+                 ERROR_INCORRECT_ARGUMENT_FOR_GET_PARAMETER - ОШИБКА: Данный параметр не может иметь такой аргумент
+        """
+        output = None
+        # Проверяем наличие заданного параметра
+        if type(parameter) in self._l_available_get_parameters:
+            # Проверяем соответствие аргументов для данного параметра
+            if isinstance(value, list) and parameter.is_more_arg():
+                for val in value:
+                    output = self._add_getparameter(parameter, val)
+                    if output:
+                        break
+            elif isinstance(value, int):
+                output = self._add_getparameter(parameter, value)
+            else:  # Данный параметр может иметь только один аргумент
+                output = Errors.ERROR_INCORRECT_COUNT_ARG_FOR_GET_PARAMETER
+        else:  # Заданного параметра нет, или он не доступен
+            output = Errors.ERROR_INCORRECT_GET_PARAMETER
+        return output
+
+    # Методы отчистки
+
+    def clear_getparameters(self):
+        """
+        Метод очистки словаря с GET-параметрами
+        """
+        self.d_parameters.clear()
 
     # Методы печати
 
