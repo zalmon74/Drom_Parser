@@ -9,8 +9,8 @@ from .Headers import HEADERS
 from .Functions import get_request, print_sorted_dict_with_separator
 from .ConstantsUrls import *
 from .Constants import *
+from .Settings import *
 from .Errors import Errors
-
 
 
 class DromParser:
@@ -90,8 +90,8 @@ class DromParser:
         """
 
         output_dict = {}
-        # Находим на странице теги <noscript>, именно там хранится полный список городов
-        list_cities_obj = self.soup_obj.find_all('noscript')
+        # Находим на странице теги ONLY_CITY_TAG_ALL_OBJ_PARAMETER_SETTING, именно там хранится полный список городов
+        list_cities_obj = self.soup_obj.find_all(ONLY_CITY_TAG_ALL_OBJ_PARAMETER_SETTING)
         # Перебираем список и парсим теги
         for city_obj in list_cities_obj:
             # На стринце присутствует объект, который не содержит список городов
@@ -103,9 +103,9 @@ class DromParser:
                 for tag in city_obj:
                     # Внутри имеются объекты не относящиеся к тегу, поэтому проверяем,
                     # а потом только добавлям в выходной объект.
-                    # Необходимые города храняться только в теге <a>
-                    if isinstance(tag, bs4_Tag) and tag.name == 'a':
-                        output_dict[tag.text] = tag['href']
+                    # Необходимые города храняться только в теге ONLY_CITY_TAG_OBJ_PARAMETER_SETTING
+                    if isinstance(tag, bs4_Tag) and tag.name == ONLY_CITY_TAG_OBJ_PARAMETER_SETTING:
+                        output_dict[tag.text] = tag[ONLY_CITY_LINK_PARAMETER_SETTING_SETTING]
         # Чтобы не отдавать пустой словарь. Лучше отдать None
         if len(output_dict) == 0:
             output_dict = None
@@ -131,16 +131,20 @@ class DromParser:
         """
 
         output_dict = {}
-        # Сначала парсим по классу 'css-1q61nn e4ojbx42' и получаем популярные марки авто, которые выдаются
-        # на главынй экран
-        list_marque_obj = self.soup_obj.find_all('div', class_='css-1q61nn e4ojbx42')
+        # Сначала парсим по классу MARQUE_POPULAR_CLASS_CSS_OBJ_PARAMETER_SETTING и получаем популярные марки авто,
+        # которые выдаются на главынй экран
+        list_marque_obj = self.soup_obj.find_all(MARQUE_POPULAR_TAG_OBJ_PARAMETER_SETTING,
+                                                 class_=MARQUE_POPULAR_CLASS_CSS_OBJ_PARAMETER_SETTING)
         # Итерируемся по маркам и добавляем их в выходной словарь
         for marque_obj in list_marque_obj:
-            # Ищем ссылку с параметром data-ftid='component_cars-list-item_hidden-link' и заполняем словарь
-            marque_a = marque_obj.find('a', {'data-ftid': 'component_cars-list-item_hidden-link'})
-            output_dict[marque_a.text] = marque_a['href']
-        # Так как на странице не все марки, то необходимо еще спарсить тэг <noscript> - там располгаются остальная часть
-        list_marque_obj = self.soup_obj.find_all('noscript')
+            # Ищем ссылку с параметром NAME_OBJ_MARQUE_PARAMETER_SETTING=DATA_OBJ_MARQUE_PARAMETER_SETTING
+            # и заполняем словарь
+            marque_a = marque_obj.find(MARQUE_TAG_OBJ_PARAMETER_SETTING,
+                                       {MARQUE_NAME_OBJ_PARAMETER_SETTING: MARQUE_DATA_OBJ_PARAMETER_SETTING})
+            output_dict[marque_a.text] = marque_a[MARQUE_LINK_PARAMETER_SETTING]
+        # Так как на странице не все марки, то необходимо еще спарсить тэг TAG_ALL_OBJ_MAQUE_PARAMETER_SETTING -
+        # там располгаются остальная часть
+        list_marque_obj = self.soup_obj.find_all(MARQUE_TAG_ALL_OBJ_PARAMETER_SETTING)
         # Перебираем список и парсим теги
         for marque_obj in list_marque_obj:
             # На стринце присутствует объект, который не содержит список марок
@@ -153,8 +157,8 @@ class DromParser:
                     # Внутри имеются объекты не относящиеся к тегу, поэтому проверяем,
                     # а потом только добавлям в выходной объект.
                     # Необходимые марки храняться только в теге <a>
-                    if isinstance(tag, bs4_Tag) and tag.name == 'a':
-                        output_dict[tag.text] = tag['href']
+                    if isinstance(tag, bs4_Tag) and tag.name == MARQUE_TAG_OBJ_PARAMETER_SETTING:
+                        output_dict[tag.text] = tag[MARQUE_LINK_PARAMETER_SETTING]
         # Чтобы не отдавать пустой словарь. Лучше отдать None
         if len(output_dict) == 0:
             output_dict = None
@@ -198,11 +202,12 @@ class DromParser:
 
         # Выходной словарь
         output_dict = {}
-        # Получаем список доступных моделей, которые хранятся в <div> класса 'css-18clw5c ehmqafe0'
-        # Внутри имеется тэг <a>, который хранит ссылка на описание модели с классом 'e64vuai0 css-1i48p5q e104a11t0'
-        list_models_obj = self.soup_obj.find_all('a', class_='e64vuai0 css-1i48p5q e104a11t0')
+        # Внутри имеется тэг MODEL_TAG_ALL_OBJ_PARAMETER_SETTING, который хранит ссылка на описание модели с классом
+        # MODEL_CLASS_CSS_OBJ_PARAMETER_SETTING
+        list_models_obj = self.soup_obj.find_all(MODEL_TAG_ALL_OBJ_PARAMETER_SETTING,
+                                                 class_=MODEL_CLASS_CSS_OBJ_PARAMETER_SETTING)
         for model in list_models_obj:
-            output_dict[model.text] = model['href']
+            output_dict[model.text] = model[MODE_LINK_PARAMETER_SETTING]
         return output_dict
 
     def _set_curr_url(self, city: str = None, marque: str = None, model: str = None):
@@ -346,7 +351,7 @@ class DromParser:
                 # Так как URL заканчивается символом '/', то последний элемент будет пустой,
                 # необходимо брать предпоследний
                 name_marque = lst_str[-2]
-                output = url_city.replace('auto', name_marque)
+                output = url_city.replace(NAME_AUTO_URL_PARAMETER_SETTING, name_marque)
             else:
                 output = url_marque
         else:
@@ -438,9 +443,10 @@ class DromParser:
         # Словарь с параметрами, которые указаны в выходных флагах
         data_output = dict()
         # Определяем название объявления
-        title = input_obj.find('span', {'data-ftid': 'bull_title'}).text
+        title = input_obj.find(TITLE_TAG_OBJ_PARAMETER_SETTING,
+                               {TITLE_NAME_OBJ_PARAMETER_SETTING: TITLE_DATA_OBJ_PARAMETER_SETTING}).text
         # Определяем URL объявления
-        url = input_obj['href']
+        url = input_obj[ADS_LINK_PARAMETER_SETTING]
         # Проверяем URL и парсим страницу с объявлением
         response_obj = get_request(url, headers=HEADERS)
         # Получаем soup-объект объявления
@@ -448,75 +454,88 @@ class DromParser:
             soup_obj_ads = BeautifulSoup(response_obj.text, 'html.parser')
             # Получаем описание авто
             try:
-                description = soup_obj_ads.find('div', class_='css-inmjwf e162wx9x0').\
-                    find('span', class_='css-1kb7l9z e162wx9x0').text
+                description = soup_obj_ads.find(FULL_DESCRIPTION_TAG_OBJ_PARAMETER_SETTING,
+                                                class_=FULL_DESCRIPTION_CLASS_CSS_OBJ_PARAMETER_SETTING)
+                description = description.find(DESCRIPTION_TAG_OBJ_PARAMETER_SETTING,
+                                               class_=DESCRIPTION_CLASS_CSS_OBJ_PARAMETER_SETTING).text
             except AttributeError:
-                description = '-'
+                description = MESSAGE_OUTPUT_DESCRIPTION
             # Получаем ссылки на фото
             photos = []
             try:
-                lst_obj_photos = soup_obj_ads.find('div', {'data-ftid': 'bull-page_bull-gallery_thumbnails'}).find_all('a')
+                lst_obj_photos = soup_obj_ads.find(PHOTO_TAG_ALL_OBJ_PARAMETER_SETTING,
+                                                   {PHOTO_NAME_OBJ_PARAMETER_SETTING: PHOTO_DATA_OBJ_PARAMETER_SETTING}
+                                                   ).find_all(PHOTO_TAG_OBJ_PARAMETER_SETTING)
                 for obj_photo in lst_obj_photos:
-                    if isinstance(obj_photo, bs4_Tag) and obj_photo.name == 'a':
-                        photos.append(obj_photo['href'])
+                    if isinstance(obj_photo, bs4_Tag) and obj_photo.name == PHOTO_TAG_OBJ_PARAMETER_SETTING:
+                        photos.append(obj_photo[PHOTO_LINK_PARAMETER_SETTING])
             except AttributeError:
-                photos = '-'
-            # Описание двигателия
+                photos = MESSAGE_OUTPUT_PHOTOS
+            # Описание двигателя
             try:
-                engine = soup_obj_ads.find('th', text='Двигатель').next_sibling.next_sibling.text
+                engine = soup_obj_ads.find(ENGINE_TAG_OBJ_PARAMETER_SETTING,
+                                           text=ENGINE_TEXT_PARAMETER_SETTING).next_sibling.next_sibling.text
             except AttributeError:
-                engine = '-'
+                engine = MESSAGE_OUTPUT_ENGINE
             # Мощность
             try:
-                power = int(soup_obj_ads.find('th', text='Мощность').next_sibling.text.split()[0])
+                power = int(soup_obj_ads.find(POWER_TAG_OBJ_PARAMETER_SETTING,
+                                              text=POWER_TEXT_PARAMETER_SETTING).next_sibling.text.split()[0])
             except AttributeError:
-                power = '-'
+                power = MESSAGE_OUTPUT_POWER
             # Коробка передач
             try:
-                transmission = soup_obj_ads.find('th', text='Коробка передач').next_sibling.text
+                transmission = soup_obj_ads.find(TRANSMISSION_TAG_OBJ_PARAMETER_SETTING,
+                                                 text=TRANSMISSION_TEXT_PARAMETER_SETTING).next_sibling.text
             except AttributeError:
-                transmission = '-'
+                transmission = MESSAGE_OUTPUT_TRANSMISSION
             # Цвет
             try:
-                color = soup_obj_ads.find('th', text='Цвет').next_sibling.text
+                color = soup_obj_ads.find(COLOR_TAG_OBJ_PARAMETER_SETTING,
+                                          text=COLOR_TEXT_PARAMETER_SETTING).next_sibling.text
             except AttributeError:
-                color = '-'
+                color = MESSAGE_OUTPUT_COLOR
             # Пробег
             try:
-                mileage = soup_obj_ads.find('th', text='Пробег, км').next_sibling.text.split()[0]
+                mileage = soup_obj_ads.find(MILEAGE_TAG_OBJ_PARAMETER_SETTING,
+                                            text=MILEAGE_TEXT_PARAMETER_SETTING).next_sibling.text.split()[0]
                 # Избовляемся от Юникода
-                mileage = mileage.encode("ascii", "ignore")
+                mileage = mileage.encode('ascii', 'ignore')
                 mileage = int(mileage.decode())
             except AttributeError:
-                mileage = '-'
+                mileage = MESSAGE_OUTPUT_MILEAGE
             # Расположение руля
             try:
-                hand_drive = soup_obj_ads.find('th', text='Руль').next_sibling.text
+                hand_drive = soup_obj_ads.find(HAND_DRIVE_TAG_OBJ_PARAMETER_SETTING,
+                                               text=HAND_DRIVE_TEXT_PARAMETER_SETTING).next_sibling.text
             except AttributeError:
-                hand_drive = '-'
+                hand_drive = MESSAGE_OUTPUT_HAND_DRIVE
         else:
-            description = '-'
-            photos = '-'
-            engine = '-'
-            power = '-'
-            transmission = '-'
-            color = '-'
-            mileage = '-'
-            hand_drive = '-'
+            description = MESSAGE_OUTPUT_DESCRIPTION
+            photos = MESSAGE_OUTPUT_PHOTOS
+            engine = MESSAGE_OUTPUT_ENGINE
+            power = MESSAGE_OUTPUT_POWER
+            transmission = MESSAGE_OUTPUT_TRANSMISSION
+            color = MESSAGE_OUTPUT_COLOR
+            mileage = MESSAGE_OUTPUT_MILEAGE
+            hand_drive = MESSAGE_OUTPUT_HAND_DRIVE
         # Определяем цену авто
-        price = input_obj.find('span', {'data-ftid': 'bull_price'}).text
+        price = input_obj.find(PRICE_TAG_OBJ_PARAMETER_SETTING,
+                               {PRICE_NAME_OBJ_PARAMETER_SETTING: PRICE_DATA_OBJ_PARAMETER_SETTING}).text
         # Избовляемся от Юникода
-        price = price.encode("ascii", "ignore")
+        price = price.encode('ascii', 'ignore')
         price = int(price.decode())
         # Определяем описание цены
         try:
-            desc_price = input_obj.find('div', class_='css-11m58oj evjskuu0').text
+            desc_price = input_obj.find(DESC_PRICE_TAG_OBJ_PARAMETER_SETTING,
+                                        class_=DESC_PRICE_CLASS_CSS_OBJ_PARAMETER_SETTING).text
         except AttributeError:
-            desc_price = '-'
+            desc_price = MESSAGE_OUTPUT_DESC_PRICE
         # Определяем город авто
-        city = input_obj.find('span', class_='css-1488ad e162wx9x0').text
+        city = input_obj.find(CITY_TAG_OBJ_PARAMETER_SETTING, class_=CITY_CLASS_CSS_OBJ_PARAMETER_SETTING).text
         # Определяем дату объявления
-        date = input_obj.find('div', {'data-ftid': 'bull_date'}).text
+        date = input_obj.find(DATE_TAG_OBJ_PARAMETER_SETTING,
+                              {DATE_NAME_OBJ_PARAMETER_SETTING: DATE_DATA_OBJ_PARAMETER_SETTING}).text
 
         # Добавляем полученные данные в выходной словарь
         if self._l_output_parameters[OutPar.IND_URL_OUTPUT_PARAMETER]:
@@ -572,8 +591,9 @@ class DromParser:
                                                     {NAME_HAND_DRIVE_OUTPUT_PARAMETER: 'Расположение руля'}
         """
         output = None
-        # Каждое объявление имеет css class = 'css-5l099z ewrty961' По нему и будем фильтровать данные на странице
-        l_ads = self.soup_obj.find_all('a', class_='css-5l099z ewrty961')
+        # Каждое объявление имеет css class = ADS_CLASS_CSS_OBJ_PARAMETER_SETTING По нему и будем фильтровать данные
+        # на странице
+        l_ads = self.soup_obj.find_all(ADS_TAG_OBJ_PARAMETER_SETTING, class_=ADS_CLASS_CSS_OBJ_PARAMETER_SETTING)
         if l_ads:
             output = dict()
         num_ads = 0
@@ -828,9 +848,10 @@ class DromParser:
         return output
 
     def set_output_parameters(self, *args, f_url: bool = True, f_price: bool = True, f_desc_price: bool = True,
-                              f_city: bool = True, f_date: bool = True, f_description: bool = True, f_photo: bool = True,
-                              f_engine: bool = True, f_power: bool = True, f_transmission: bool = True,
-                              f_color: bool = True, f_mileage: bool = True, f_hand_drive: bool = True):
+                              f_city: bool = True, f_date: bool = True, f_description: bool = True,
+                              f_photo: bool = True, f_engine: bool = True, f_power: bool = True,
+                              f_transmission: bool = True, f_color: bool = True, f_mileage: bool = True,
+                              f_hand_drive: bool = True):
         """
         Метод установки флагов выходных параметров. По умолчанию все флаги установлены в True.
         Можно задать сразу списком параметров, индексы которых указаны ниже в качестве первого аргумента.
