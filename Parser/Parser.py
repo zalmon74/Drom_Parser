@@ -3,12 +3,14 @@ import inspect
 from bs4 import BeautifulSoup
 from bs4.element import Tag as bs4_Tag
 
+import GET_Parameters as GetPar
+import Output_Parameters as OutPar
 from .Headers import HEADERS
 from .Functions import get_request, print_sorted_dict_with_separator
 from .ConstantsUrls import *
 from .Constants import *
 from .Errors import Errors
-import GET_Parameters as GetPar
+
 
 
 class DromParser:
@@ -414,15 +416,266 @@ class DromParser:
             output = Errors.ERROR_INCORRECT_ARGUMENT_FOR_GET_PARAMETER
         return output
 
+    def _get_dict_with_parse_soup_obj_for_1_obj(self, input_obj: bs4_Tag) -> dict:
+        """
+        Метод получения словаря с парсенным SOUP-объектом.
+        :param input_obj: Тэг (объект), который необходимо спарсить
+        :return: Словарь, где key = Название объявления, data = словарь с различными параметрами:
+                                                         {NAME_URL_OUTPUT_PARAMETER: 'Страница с самим объявлением'}
+                                                         {NAME_PRICE_OUTPUT_PARAMETER: Цена авто}
+                                                         {NAME_DESC_PRICE_OUTPUT_PARAMETER: 'Описание цены'}
+                                                         {NAME_CITY_PRICE_OUTPUT_PARAMETER: 'Город'}
+                                                         {NAME_DATE_OUTPUT_PARAMETER: 'Дата подачи объявления'}
+                                                         {NAME_DESCRIPTION_OUTPUT_PARAMETER: 'Описание авто'}
+                                                         {NAME_PHOTO_OUTPUT_PARAMETERS: [URL на фото]}
+                                                         {NAME_ENGINE_OUTPUT_PARAMETERS: 'Описание двигателя'}
+                                                         {NAME_POWER_OUTPUT_PARAMETERS: Кол-во Л.С.}
+                                                         {NAME_TRANSMISSION_OUTPUT_PARAMETERS: 'Коробка передач'}
+                                                         {NAME_COLOR_OUTPUT_PARAMETERS: 'Цвет'}
+                                                         {NAME_MILEAGE_OUTPUT_PARAMETER: Пробег автомобиля}
+                                                         {NAME_HAND_DRIVE_OUTPUT_PARAMETER: 'Расположение руля'}
+        """
+        # Словарь с параметрами, которые указаны в выходных флагах
+        data_output = dict()
+        # Определяем название объявления
+        title = input_obj.find('span', {'data-ftid': 'bull_title'}).text
+        # Определяем URL объявления
+        url = input_obj['href']
+        # Проверяем URL и парсим страницу с объявлением
+        response_obj = get_request(url, headers=HEADERS)
+        # Получаем soup-объект объявления
+        if response_obj and response_obj.ok:
+            soup_obj_ads = BeautifulSoup(response_obj.text, 'html.parser')
+            # Получаем описание авто
+            try:
+                description = soup_obj_ads.find('div', class_='css-inmjwf e162wx9x0').\
+                    find('span', class_='css-1kb7l9z e162wx9x0').text
+            except AttributeError:
+                description = '-'
+            # Получаем ссылки на фото
+            photos = []
+            try:
+                lst_obj_photos = soup_obj_ads.find('div', {'data-ftid': 'bull-page_bull-gallery_thumbnails'}).find_all('a')
+                for obj_photo in lst_obj_photos:
+                    if isinstance(obj_photo, bs4_Tag) and obj_photo.name == 'a':
+                        photos.append(obj_photo['href'])
+            except AttributeError:
+                photos = '-'
+            # Описание двигателия
+            try:
+                engine = soup_obj_ads.find('th', text='Двигатель').next_sibling.next_sibling.text
+            except AttributeError:
+                engine = '-'
+            # Мощность
+            try:
+                power = int(soup_obj_ads.find('th', text='Мощность').next_sibling.text.split()[0])
+            except AttributeError:
+                power = '-'
+            # Коробка передач
+            try:
+                transmission = soup_obj_ads.find('th', text='Коробка передач').next_sibling.text
+            except AttributeError:
+                transmission = '-'
+            # Цвет
+            try:
+                color = soup_obj_ads.find('th', text='Цвет').next_sibling.text
+            except AttributeError:
+                color = '-'
+            # Пробег
+            try:
+                mileage = soup_obj_ads.find('th', text='Пробег, км').next_sibling.text.split()[0]
+                # Избовляемся от Юникода
+                mileage = mileage.encode("ascii", "ignore")
+                mileage = int(mileage.decode())
+            except AttributeError:
+                mileage = '-'
+            # Расположение руля
+            try:
+                hand_drive = soup_obj_ads.find('th', text='Руль').next_sibling.text
+            except AttributeError:
+                hand_drive = '-'
+        else:
+            description = '-'
+            photos = '-'
+            engine = '-'
+            power = '-'
+            transmission = '-'
+            color = '-'
+            mileage = '-'
+            hand_drive = '-'
+        # Определяем цену авто
+        price = input_obj.find('span', {'data-ftid': 'bull_price'}).text
+        # Избовляемся от Юникода
+        price = price.encode("ascii", "ignore")
+        price = int(price.decode())
+        # Определяем описание цены
+        try:
+            desc_price = input_obj.find('div', class_='css-11m58oj evjskuu0').text
+        except AttributeError:
+            desc_price = '-'
+        # Определяем город авто
+        city = input_obj.find('span', class_='css-1488ad e162wx9x0').text
+        # Определяем дату объявления
+        date = input_obj.find('div', {'data-ftid': 'bull_date'}).text
+
+        # Добавляем полученные данные в выходной словарь
+        if self._l_output_parameters[OutPar.IND_URL_OUTPUT_PARAMETER]:
+            data_output[OutPar.NAME_URL_OUTPUT_PARAMETER] = url
+        if self._l_output_parameters[OutPar.IND_PRICE_OUTPUT_PARAMETER]:
+            data_output[OutPar.NAME_PRICE_OUTPUT_PARAMETER] = price
+        if self._l_output_parameters[OutPar.IND_DESC_PRICE_OUTPUT_PARAMETER]:
+            data_output[OutPar.NAME_DESC_PRICE_OUTPUT_PARAMETER] = desc_price
+        if self._l_output_parameters[OutPar.IND_CITY_PRICE_OUTPUT_PARAMETER]:
+            data_output[OutPar.NAME_CITY_PRICE_OUTPUT_PARAMETER] = city
+        if self._l_output_parameters[OutPar.IND_DATE_OUTPUT_PARAMETER]:
+            data_output[OutPar.NAME_DATE_OUTPUT_PARAMETER] = date
+        if self._l_output_parameters[OutPar.IND_PHOTO_OUTPUT_PARAMETERS]:
+            data_output[OutPar.NAME_DESCRIPTION_OUTPUT_PARAMETER] = photos
+        if self._l_output_parameters[OutPar.IND_DESCRIPTION_OUTPUT_PARAMETER]:
+            data_output[OutPar.NAME_DESCRIPTION_OUTPUT_PARAMETER] = description
+        if self._l_output_parameters[OutPar.IND_PHOTO_OUTPUT_PARAMETERS]:
+            data_output[OutPar.NAME_PHOTO_OUTPUT_PARAMETERS] = photos
+        if self._l_output_parameters[OutPar.IND_ENGINE_OUTPUT_PARAMETERS]:
+            data_output[OutPar.NAME_ENGINE_OUTPUT_PARAMETERS] = engine
+        if self._l_output_parameters[OutPar.IND_POWER_OUTPUT_PARAMETERS]:
+            data_output[OutPar.NAME_POWER_OUTPUT_PARAMETERS] = power
+        if self._l_output_parameters[OutPar.IND_TRANSMISSION_OUTPUT_PARAMETERS]:
+            data_output[OutPar.NAME_TRANSMISSION_OUTPUT_PARAMETERS] = transmission
+        if self._l_output_parameters[OutPar.IND_COLOR_OUTPUT_PARAMETERS]:
+            data_output[OutPar.NAME_COLOR_OUTPUT_PARAMETERS] = color
+        if self._l_output_parameters[OutPar.IND_MILEAGE_OUTPUT_PARAMETER]:
+            data_output[OutPar.NAME_MILEAGE_OUTPUT_PARAMETER] = mileage
+        if self._l_output_parameters[OutPar.IND_HAND_DRIVE_OUTPUT_PARAMETER]:
+            data_output[OutPar.NAME_HAND_DRIVE_OUTPUT_PARAMETER] = hand_drive
+
+        output = {title: data_output}
+        return output
+
+    def _get_dict_with_parse_soup_obj_for_1_page(self) -> dict:
+        """
+        Метод получения словаря с парсенным SOUP-объектов для одной страницы.
+        :return: None - Если на данной странице нет объявлений
+                 Словарь, где key = Номер объявление на странице, data = словарь, где
+                                                    key = Название объявления, data = словарь с различными параметрами:
+                                                    {NAME_URL_OUTPUT_PARAMETER: 'Страница с самим объявлением'}
+                                                    {NAME_PRICE_OUTPUT_PARAMETER: Цена авто}
+                                                    {NAME_DESC_PRICE_OUTPUT_PARAMETER: 'Описание цены'}
+                                                    {NAME_CITY_PRICE_OUTPUT_PARAMETER: 'Город'}
+                                                    {NAME_DATE_OUTPUT_PARAMETER: 'Дата подачи объявления'}
+                                                    {NAME_DESCRIPTION_OUTPUT_PARAMETER: 'Описание авто'}
+                                                    {NAME_PHOTO_OUTPUT_PARAMETERS: [URL на фото]}
+                                                    {NAME_ENGINE_OUTPUT_PARAMETERS: 'Описание двигателя'}
+                                                    {NAME_POWER_OUTPUT_PARAMETERS: Кол-во Л.С.}
+                                                    {NAME_TRANSMISSION_OUTPUT_PARAMETERS: 'Коробка передач'}
+                                                    {NAME_COLOR_OUTPUT_PARAMETERS: 'Цвет'}
+                                                    {NAME_MILEAGE_OUTPUT_PARAMETER: Пробег автомобиля}
+                                                    {NAME_HAND_DRIVE_OUTPUT_PARAMETER: 'Расположение руля'}
+        """
+        output = None
+        # Каждое объявление имеет css class = 'css-5l099z ewrty961' По нему и будем фильтровать данные на странице
+        l_ads = self.soup_obj.find_all('a', class_='css-5l099z ewrty961')
+        if l_ads:
+            output = dict()
+        num_ads = 0
+        # Перебираем все объявления и заполняем выходной словарь
+        for obj_ads in l_ads:
+            output_1_obj = self._get_dict_with_parse_soup_obj_for_1_obj(obj_ads)
+            output[num_ads] = output_1_obj
+            num_ads += 1
+        return output
+
+    def _next_page_ads(self, next_num_page: int):
+        """
+        Метод установки URL со следующей страницы пагинации объявлений
+        :param next_num_page: номер следующей страницы
+        """
+        url = self.current_url
+        # Если мы находимся на первой странице, то в ее URL отсутствует маршрут типа 'page' соответственно нужно его
+        # добавить. Он находится в [-2] при разбиении URL. Иначе, просто изменить соответствующий номер страницы
+        split_url = url.split('/')
+        if 'page' in split_url[-2]:
+            split_url[-2] = f'page{next_num_page}'
+        else:
+            split_url.insert(-1, f'page{next_num_page}')
+        self.current_url = '/'.join(split_url)
+
+    def _set_dict_with_parse_ads(self, city: str = None, marque: str = None, model: str = None,
+                                 f_with_params: bool = False, step_num_page: int = 1):
+        """
+        Метод формирования словаря со всеми спарсенными объявлениями с заданными условиями.
+        Полученный словарь кладет в соответствующее поле
+
+        :param city: Город, если None - поиск во всех городах
+        :param marque: Марка авто, если None - поиск всех марок
+        :param model: Модель авто, если None - поиск всех моделей (поиск только модели не работает без марки)
+        :param f_with_params: Флаг запроса с GET-параметрами, которые ранее были установлены
+                              True = с параметрами, False = без параметров
+        :param step_num_page: Шаг по страницам объявлений
+
+        :return: None - успешное выполнение или
+                 ERROR_INCORRECT_MARQUE_AUTO - ОШИБКА: задана несуществующая марка автомобиля
+                 ERROR_INCORRECT_MODEL_AUTO - ОШИБКА: задана несуществующая модель авто
+                 ERROR_INCORRECT_CITY - ОШИБКА: задан несуществующий город
+                 ERROR_MODEL_WITHOUT_MARQUE - ОШИБКА: задана модель без марки авто
+        """
+        output = None
+        # Получаем ссылку с объявлениями
+        error = self._set_curr_url(city, marque, model)
+        if error is None:
+            # Формируем словарь
+            dict_ads = dict()
+            # Бесконечный цикл для парсинга каждой страницы, как только на странице не окажется объявлений, то
+            # он завершится
+            num_page = 0
+            while True:
+                if f_with_params and num_page:
+                    self.response = get_request(self.current_url, HEADERS, self.d_parameters)
+                    self.current_url = self.response.url
+                else:
+                    self.response = get_request(self.current_url, HEADERS)
+                    self.current_url = self.response.url
+                # Формируем soup-объект
+                self._set_soup_obj_from_response()
+                # Парсим одну страницу
+                dict_one_page = self._get_dict_with_parse_soup_obj_for_1_page()
+                if dict_one_page is None:
+                    break
+                else:
+                    dict_ads[num_page] = dict_one_page
+                    # Переходим на следующую страницу
+                    num_page += step_num_page
+                    self._next_page_ads(num_page+1)
+            # Полсе парсинга всех страниц заполняем поле
+            self.d_parse_ads = dict_ads
+        else:
+            output = error
+        return output
+
     def __init__(self):
         # Список с доступными объектами get-параметров для запроса
         self._l_available_get_parameters = None
+        # Список с флагами для выходных параметров
+        # [IND_URL_OUTPUT_PARAMETER] = url
+        # [IND_PRICE_OUTPUT_PARAMETER] = price
+        # [IND_DESC_PRICE_OUTPUT_PARAMETER] = desc_price
+        # [IND_CITY_PRICE_OUTPUT_PARAMETER] = city
+        # [IND_DATE_OUTPUT_PARAMETER] = date
+        # [IND_DESCRIPTION_OUTPUT_PARAMETER] = description
+        # [IND_PHOTO_OUTPUT_PARAMETERS] = photo
+        # [IND_ENGINE_OUTPUT_PARAMETERS] = engine
+        # [IND_POWER_OUTPUT_PARAMETERS] = power
+        # [IND_TRANSMISSION_OUTPUT_PARAMETERS] = transmission
+        # [IND_COLOR_OUTPUT_PARAMETERS] = color
+        # [IND_MILEAGE_OUTPUT_PARAMETER] = mileage
+        # [IND_HAND_DRIVE_OUTPUT_PARAMETER] = hand_drive
+        self._l_output_parameters = [True for _ in range(13)]
 
         self.response = None  # Объект с ответом на запрос (последний)
         self.soup_obj = None  # Спарсеный объект (soup) (последний)
         self.d_city_href = None  # Словарь: key = город, data = href - URL с объявлениями этого города
         self.d_marque_href = None  # Словарь: key = марка, data = href - URL со всеми доступными моделями авто
         self.d_model_href = None  # Словарь: key = модель автомобиля, data = href - URL с описанием данной модели
+        self.d_parse_ads = None  # Словарь: key = номер страницы, data = словарь с парсенными данными
         self.d_parameters = dict()  # Словарь с доп. параметрами: key = имя параметра, data = значение или значения
         self.current_url = None  # Текущий URL
         self.current_marque = None  # Выбранная марка автомобиля
@@ -484,7 +737,7 @@ class DromParser:
             output = error
         return output
 
-    def get_url_with_ads(self, city: str = None, marque: str = None, model: str = None, f_with_params: bool = None):
+    def get_url_with_ads(self, city: str = None, marque: str = None, model: str = None, f_with_params: bool = False):
         """
         Метод получения URL с объявлениями с заданными параметрами
         :param city: Город, если None - поиск во всех городах
@@ -507,6 +760,42 @@ class DromParser:
             output = self.current_url
         else:
             output = error
+        return output
+
+    def get_dict_with_parse_ads(self, city: str = None, marque: str = None, model: str = None,
+                                f_with_params: bool = False, step_num_page: int = 1):
+        """
+        Метод получения словаря с парсенными объявлениями
+        :param city: Город, если не задан - поиск по всем городам
+        :param marque: Марка авто, если на задана - поиск по всем городам
+        :param model: Модель авто, если на задана - поиск по всем городам
+        :param f_with_params: Флаг поиска с дополнительными GET-параметрами (различные фильтры объявлений)
+        :param step_num_page: Шаг по страницам с объявлений
+                              step_num_page: Шаг по страницам объявлений
+        :return: Словарь, где key = номер страницы объявления, а data = Словарь
+                                        Словарь, где key = Номер объявление на странице, data = словарь, где
+                                                    key = Название объявления, data = словарь с различными параметрами:
+                                                    {NAME_URL_OUTPUT_PARAMETER: 'Страница с самим объявлением'}
+                                                    {NAME_PRICE_OUTPUT_PARAMETER: Цена авто}
+                                                    {NAME_DESC_PRICE_OUTPUT_PARAMETER: 'Описание цены'}
+                                                    {NAME_CITY_PRICE_OUTPUT_PARAMETER: 'Город'}
+                                                    {NAME_DATE_OUTPUT_PARAMETER: 'Дата подачи объявления'}
+                                                    {NAME_DESCRIPTION_OUTPUT_PARAMETER: 'Описание авто'}
+                                                    {NAME_PHOTO_OUTPUT_PARAMETERS: [URL на фото]}
+                                                    {NAME_ENGINE_OUTPUT_PARAMETERS: 'Описание двигателя'}
+                                                    {NAME_POWER_OUTPUT_PARAMETERS: Кол-во Л.С.}
+                                                    {NAME_TRANSMISSION_OUTPUT_PARAMETERS: 'Коробка передач'}
+                                                    {NAME_COLOR_OUTPUT_PARAMETERS: 'Цвет'}
+                                                    {NAME_MILEAGE_OUTPUT_PARAMETER: Пробег автомобиля}
+                                                    {NAME_HAND_DRIVE_OUTPUT_PARAMETER: 'Расположение руля'}
+                 ERROR_INCORRECT_MARQUE_AUTO - ОШИБКА: задана несуществующая марка автомобиля
+                 ERROR_INCORRECT_MODEL_AUTO - ОШИБКА: задана несуществующая модель авто
+                 ERROR_INCORRECT_CITY - ОШИБКА: задан несуществующий город
+                 ERROR_MODEL_WITHOUT_MARQUE - ОШИБКА: задана модель без марки авто
+        """
+        output = self._set_dict_with_parse_ads(city, marque, model, f_with_params, step_num_page)
+        if output is None and len(self.d_parse_ads) != 0:
+            output = self.d_parse_ads
         return output
 
     # Сеттеры
@@ -537,6 +826,60 @@ class DromParser:
         else:  # Заданного параметра нет, или он не доступен
             output = Errors.ERROR_INCORRECT_GET_PARAMETER
         return output
+
+    def set_output_parameters(self, *args, f_url: bool = True, f_price: bool = True, f_desc_price: bool = True,
+                              f_city: bool = True, f_date: bool = True, f_description: bool = True, f_photo: bool = True,
+                              f_engine: bool = True, f_power: bool = True, f_transmission: bool = True,
+                              f_color: bool = True, f_mileage: bool = True, f_hand_drive: bool = True):
+        """
+        Метод установки флагов выходных параметров. По умолчанию все флаги установлены в True.
+        Можно задать сразу списком параметров, индексы которых указаны ниже в качестве первого аргумента.
+        :param f_url: флаг выдачи URL на соответствующее объявление
+        :param f_price: флаг выдачи цены данного объявления
+        :param f_desc_price: флаг выдачи описания цены, с точки зрения, ДРОМа
+        :param f_city: флаг выдачи города, в которой продается соответствующее автомобиля
+        :param f_date: флаг выдачи даты размещения объявления
+        :param f_description: флаг выдачи описания объявления
+        :param f_photo: флаг выдачи URL на фото с объявления
+        :param f_engine: флаг выдачи описания двигателя автомобиля
+        :param f_power: флаг выдачи мощности автомобиля
+        :param f_transmission: флаг выдачи коробки передач автомобиля
+        :param f_color: флаг выдачи цвета автомобиля
+        :param f_mileage: флаг выдачи пробега автомобиля
+        :param f_hand_drive: флаг выдачи расположения руля автомобиля
+        :param args[0]: Список с белевыми значениями, который позволяет задать вектор с флагами выходных параметров
+                        сразу, а не по одному соответствующему параметру. Расположение параметров в векторе следующее:
+                        [IND_URL_OUTPUT_PARAMETER] = url
+                        [IND_PRICE_OUTPUT_PARAMETER] = price
+                        [IND_DESC_PRICE_OUTPUT_PARAMETER] = desc_price
+                        [IND_CITY_PRICE_OUTPUT_PARAMETER] = city
+                        [IND_DATE_OUTPUT_PARAMETER] = date
+                        [IND_DESCRIPTION_OUTPUT_PARAMETER] = description
+                        [IND_PHOTO_OUTPUT_PARAMETERS] = photo
+                        [IND_ENGINE_OUTPUT_PARAMETERS] = engine
+                        [IND_POWER_OUTPUT_PARAMETERS] = power
+                        [IND_TRANSMISSION_OUTPUT_PARAMETERS] = transmission
+                        [IND_COLOR_OUTPUT_PARAMETERS] = color
+                        [IND_MILEAGE_OUTPUT_PARAMETER] = mileage
+                        [IND_HAND_DRIVE_OUTPUT_PARAMETER] = hand_drive
+        """
+        if len(args) == 0:
+            self._l_output_parameters = [True for _ in range(13)]
+            self._l_output_parameters[OutPar.IND_URL_OUTPUT_PARAMETER] = f_url
+            self._l_output_parameters[OutPar.IND_HAND_DRIVE_OUTPUT_PARAMETER] = f_hand_drive
+            self._l_output_parameters[OutPar.IND_COLOR_OUTPUT_PARAMETERS] = f_color
+            self._l_output_parameters[OutPar.IND_DATE_OUTPUT_PARAMETER] = f_date
+            self._l_output_parameters[OutPar.IND_DESCRIPTION_OUTPUT_PARAMETER] = f_description
+            self._l_output_parameters[OutPar.IND_CITY_PRICE_OUTPUT_PARAMETER] = f_city
+            self._l_output_parameters[OutPar.IND_DESC_PRICE_OUTPUT_PARAMETER] = f_desc_price
+            self._l_output_parameters[OutPar.IND_ENGINE_OUTPUT_PARAMETERS] = f_engine
+            self._l_output_parameters[OutPar.IND_MILEAGE_OUTPUT_PARAMETER] = f_mileage
+            self._l_output_parameters[OutPar.IND_PHOTO_OUTPUT_PARAMETERS] = f_photo
+            self._l_output_parameters[OutPar.IND_POWER_OUTPUT_PARAMETERS] = f_power
+            self._l_output_parameters[OutPar.IND_PRICE_OUTPUT_PARAMETER] = f_price
+            self._l_output_parameters[OutPar.IND_TRANSMISSION_OUTPUT_PARAMETERS] = f_transmission
+        elif len(args[0]) == 13:
+            self._l_output_parameters = args[0]
 
     # Методы отчистки
 
