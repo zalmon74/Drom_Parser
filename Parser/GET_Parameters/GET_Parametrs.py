@@ -960,3 +960,32 @@ class ParameterTrade(BaseParameter):
 
     def is_arbitrary_arg(self):
         return self._f_arbitrary_arg
+
+
+class ParameterDontMileage(BaseParameter):
+    """
+    Параметр, позволяющий фильтровать объявления с авто по принципу "без пробега по РФ".
+    У него нет никаких параметров, потому что он формируется дополнительным маршрутом, а не как GET-параметр
+    """
+    # Флаг, который определяет возможность задать несколько аргументов (значений) одновременно
+    _f_more_arg = False
+    # Флаг, который определяем возможность задавать произвольный аргумент
+    _f_arbitrary_arg = True
+    # Имя (маршрут)
+    name = 'bez-probega'
+
+    def get_name_str(self):
+        return self.name
+
+    def get_list_parameters(self):
+        return []
+
+    def get_dict_parameters(self):
+        return dict()
+
+    def is_more_arg(self):
+        return self._f_more_arg
+
+    def is_arbitrary_arg(self):
+        return self._f_arbitrary_arg
+

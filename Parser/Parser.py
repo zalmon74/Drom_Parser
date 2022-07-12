@@ -421,6 +421,19 @@ class DromParser:
             output = Errors.ERROR_INCORRECT_ARGUMENT_FOR_GET_PARAMETER
         return output
 
+    def _add_parameter_dont_mileage(self):
+        """
+        Метод добавления к существующему URL маршрут для параметра 'Без-пробега'
+        """
+        # Проверяем, что данный параметр задан
+        try:
+            self.d_parameters[GetPar.DONT_MILEAGE_PARAMETER.get_name_str()]
+        except KeyError:
+            pass
+        else:
+            if isinstance(self.current_url, str):
+                self.current_url += GetPar.DONT_MILEAGE_PARAMETER.get_name_str() + '/'
+
     def _get_dict_with_parse_soup_obj_for_1_obj(self, input_obj: bs4_Tag) -> dict:
         """
         Метод получения словаря с парсенным SOUP-объектом.
@@ -499,7 +512,9 @@ class DromParser:
             try:
                 mileage = soup_obj_ads.find(MILEAGE_TAG_OBJ_PARAMETER_SETTING,
                                             text=MILEAGE_TEXT_PARAMETER_SETTING).next_sibling.text.split()[0]
+                mileage = mileage.split(',')[0]
                 # Избовляемся от Юникода
+                print(title)
                 mileage = mileage.encode('ascii', 'ignore')
                 mileage = int(mileage.decode())
             except AttributeError:
@@ -648,7 +663,9 @@ class DromParser:
             # он завершится
             num_page = 0
             while True:
-                if f_with_params and num_page:
+                if f_with_params and num_page == 0:
+                    # Добавляем особый параметр "Без пробега", если он задан и формируем запрос
+                    self._add_parameter_dont_mileage()
                     self.response = get_request(self.current_url, HEADERS, self.d_parameters)
                     self.current_url = self.response.url
                 else:
@@ -774,6 +791,8 @@ class DromParser:
         error = self._set_curr_url(city, marque, model)
         if error is None:
             if f_with_params:
+                # Добавляем особый параметр "Без пробега", если он задан и формируем запрос
+                self._add_parameter_dont_mileage()
                 response = get_request(self.current_url, HEADERS, self.d_parameters)
                 if response.ok:
                     self.current_url = response.url
@@ -820,7 +839,7 @@ class DromParser:
 
     # Сеттеры
 
-    def set_getparameter(self, parameter: GetPar.BaseParameter, value: int | list):
+    def set_getparameter(self, parameter: GetPar.BaseParameter | GetPar.ParameterDontMileage, value: int | list):
         """
         Метод добавления (установки) get-параметра для запроса
         :param parameter: Объект параметра, который необходимо добавить в запрос
