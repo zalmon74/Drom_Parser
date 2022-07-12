@@ -7,6 +7,7 @@ import GET_Parameters as GetPar
 import Output_Parameters as OutPar
 from .Headers import HEADERS
 from .Functions import get_request, print_sorted_dict_with_separator
+from .Decorators import print_symbol
 from .ConstantsUrls import *
 from .Constants import *
 from .Settings import *
@@ -434,6 +435,7 @@ class DromParser:
             if isinstance(self.current_url, str):
                 self.current_url += GetPar.DONT_MILEAGE_PARAMETER.get_name_str() + '/'
 
+    @print_symbol(F_PRINT_SYMBOLS, SYMBOL_ONE_ADS)
     def _get_dict_with_parse_soup_obj_for_1_obj(self, input_obj: bs4_Tag) -> dict:
         """
         Метод получения словаря с парсенным SOUP-объектом.
@@ -514,7 +516,6 @@ class DromParser:
                                             text=MILEAGE_TEXT_PARAMETER_SETTING).next_sibling.text.split()[0]
                 mileage = mileage.split(',')[0]
                 # Избовляемся от Юникода
-                print(title)
                 mileage = mileage.encode('ascii', 'ignore')
                 mileage = int(mileage.decode())
             except AttributeError:
@@ -585,6 +586,7 @@ class DromParser:
         output = {title: data_output}
         return output
 
+    @print_symbol(F_PRINT_SYMBOLS, SYMBOL_ONE_PAGE_ADS)
     def _get_dict_with_parse_soup_obj_for_1_page(self) -> dict:
         """
         Метод получения словаря с парсенным SOUP-объектов для одной страницы.
@@ -706,6 +708,7 @@ class DromParser:
         # [IND_MILEAGE_OUTPUT_PARAMETER] = mileage
         # [IND_HAND_DRIVE_OUTPUT_PARAMETER] = hand_drive
         self._l_output_parameters = [True for _ in range(13)]
+        self.f = True
 
         self.response = None  # Объект с ответом на запрос (последний)
         self.soup_obj = None  # Спарсеный объект (soup) (последний)

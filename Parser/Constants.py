@@ -18,3 +18,7 @@ MESSAGE_OUTPUT_COLOR = '-'
 MESSAGE_OUTPUT_MILEAGE = '-'
 MESSAGE_OUTPUT_HAND_DRIVE = '-'
 MESSAGE_OUTPUT_DESC_PRICE = '-'
+
+# Вывод на экран символов при обработке сообщений
+SYMBOL_ONE_ADS = '.'  # Символ выводится на экран при обработке одного объявления
+SYMBOL_ONE_PAGE_ADS = 'P'  # Символ выводится на экран при обработке одной страницы с объявлениями
