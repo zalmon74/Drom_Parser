@@ -1,18 +1,16 @@
 import Parser
-import time
 
 
-
+# Объект с парсером
 parser = Parser.DromParser()
 
+# ИД
 city = 'Красноярск'
 marque = 'Honda'
 model = 'Logo'
-step_pages = 999999999999
+step_pages = 1
+
+# Устанавливаем необходимый фильтр, через GET-параметр
+parser.set_getparameter(Parser.getparameters.MIN_YEAR_GET_PARAMETER, 2015)
+# Получаем спарсенные объявления
 output = parser.get_dict_with_parse_ads(city=city, marque=marque, model=model, step_num_page=step_pages)
-for num_page, data_page in output.items():
-    for num_ads, data_ads in data_page.items():
-        for name_ad, data_ad in data_ads.items():
-            pass
-
-
