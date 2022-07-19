@@ -77,8 +77,8 @@ class DromParser:
         """
 
         # Формируем необходимый запрос
-        self.response = get_request(URL_CITIES, HEADERS)
-        self.current_url = URL_CITIES
+        self.response = get_request(self._drom_url_cities, HEADERS)
+        self.current_url = self._drom_url_cities
         # Создаем soup-объект
         self._set_soup_obj_from_response()
         # Заполняем словарь с городами и соответствующими URL
@@ -118,8 +118,8 @@ class DromParser:
         """
 
         # Формируем необходимый запрос
-        self.response = get_request(URL_CATALOG, HEADERS)
-        self.current_url = URL_CATALOG
+        self.response = get_request(self._drom_url_catalog, HEADERS)
+        self.current_url = self._drom_url_catalog
         # Создаем soup-объект
         self._set_soup_obj_from_response()
         # Заполняет соответствующий словарь с марками
@@ -229,7 +229,7 @@ class DromParser:
         output = None
         # Если не задан ни один параметр, то выдаем все объявления во всех городах
         if city is None and marque is None and model is None:
-            output = URL_WITH_ADS_ALL_CITIES
+            output = self._drom_url_ads_all_cities
         if model and marque is None:
             output = Errors.ERROR_MODEL_WITHOUT_MARQUE
         # Формируем ссылку на объявления в определенном городе
@@ -294,7 +294,7 @@ class DromParser:
             # Так как URL заканчивается символом '/', то последний элемент будет пустой, необходимо брать предпослдений
             name_auto = lst_str[-2]
             # Формируем выходной URL
-            output = URL_WITH_ADS_ALL_CITIES + f'{name_auto}/'
+            output = self._drom_url_ads_all_cities + f'{name_auto}/'
         else:
             output = url_auto
         return output
@@ -416,10 +416,20 @@ class DromParser:
                  ERROR_INCORRECT_ARGUMENT_FOR_GET_PARAMETER - ОШИБКА: Данный параметр не может иметь такой аргумент
         """
         output = None
-        if value in parameter.get_list_parameters() or parameter.is_arbitrary_arg():
-            self.d_parameters[parameter.get_name_str()] = value
+        if isinstance(value, list):
+            if value[0] in parameter.get_list_parameters() or parameter.is_arbitrary_arg():
+                if parameter.get_name_str() in self.d_parameters.keys():
+                    self.d_parameters[parameter.get_name_str()].append(value[0])
+                else:
+                    self.d_parameters[parameter.get_name_str()] = value
+            else:
+                output = Errors.ERROR_INCORRECT_ARGUMENT_FOR_GET_PARAMETER
         else:
-            output = Errors.ERROR_INCORRECT_ARGUMENT_FOR_GET_PARAMETER
+            if value in parameter.get_list_parameters() or parameter.is_arbitrary_arg():
+                self.d_parameters[parameter.get_name_str()] = value
+            else:
+                output = Errors.ERROR_INCORRECT_ARGUMENT_FOR_GET_PARAMETER
+
         return output
 
     def _add_parameter_dont_mileage(self):
@@ -690,7 +700,22 @@ class DromParser:
             output = error
         return output
 
-    def __init__(self):
+    def __init__(self, drom_url_home: str = URL_HOME, drom_url_cities: str = URL_CITIES,
+                 drom_url_catalog: str = URL_CATALOG, drom_url_ads_all_cities: str = URL_WITH_ADS_ALL_CITIES):
+        """
+        Конструктор для парсера.
+        :param drom_url_home: домашний URL дрома
+        :param drom_url_cities: URL - со списком доступных городов
+        :param drom_url_catalog: URL - с каталогом доступных марок
+        :param url_ads_all_cities: URL - с объявлениями во всех городах
+
+        P.S. - входные параметры нужны для простоты тестирования парсера
+        """
+        # URLs
+        self._drom_url_home = drom_url_home
+        self._drom_url_cities = drom_url_cities
+        self._drom_url_catalog = drom_url_catalog
+        self._drom_url_ads_all_cities = drom_url_ads_all_cities
         # Список с доступными объектами get-параметров для запроса
         self._l_available_get_parameters = None
         # Список с флагами для выходных параметров
@@ -708,7 +733,6 @@ class DromParser:
         # [IND_MILEAGE_OUTPUT_PARAMETER] = mileage
         # [IND_HAND_DRIVE_OUTPUT_PARAMETER] = hand_drive
         self._l_output_parameters = [True for _ in range(13)]
-        self.f = True
 
         self.response = None  # Объект с ответом на запрос (последний)
         self.soup_obj = None  # Спарсеный объект (soup) (последний)
@@ -858,7 +882,7 @@ class DromParser:
             # Проверяем соответствие аргументов для данного параметра
             if isinstance(value, list) and parameter.is_more_arg():
                 for val in value:
-                    output = self._add_getparameter(parameter, val)
+                    output = self._add_getparameter(parameter, [val])
                     if output:
                         break
             elif isinstance(value, int):
