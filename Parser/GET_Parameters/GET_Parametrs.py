@@ -28,7 +28,8 @@ class BaseParameter:
 
     def get_dict_parameters(self):
         """
-        Виртуальный метод, для получения словаря, где key = имя параметры, data = список стандартных параметров
+        Виртуальный метод, для получения словаря, где key = Имя или описание значения,
+                                                      data = Значение параметра
 
         :return: словарь, где key = имя параметры, data = список стандартных параметров
         """
@@ -75,7 +76,13 @@ class ParameterDistance(BaseParameter):
         return [self.d_100, self.d_200, ParameterDistance.d_500, ParameterDistance.d_1000]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            str(self.d_100): self.d_100,
+            str(self.d_200): self.d_200,
+            str(self.d_500): self.d_500,
+            str(self.d_1000): self.d_1000
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -105,7 +112,10 @@ class ParameterMinPrice(BaseParameter):
         return [*self.l_min_price]
 
     def get_dict_parameters(self):
-        return {self.name: self.l_min_price}
+        out_dict = dict()
+        for price in self.l_min_price:
+            out_dict[str(price)] = price
+        return out_dict
 
     def is_more_arg(self):
         return ParameterMinPrice._f_more_arg
@@ -135,7 +145,10 @@ class ParameterMaxPrice(BaseParameter):
         return [*self.l_max_price]
 
     def get_dict_parameters(self):
-        return {self.name: self.l_max_price}
+        out_dict = dict()
+        for price in self.l_max_price:
+            out_dict[str(price)] = price
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -165,7 +178,10 @@ class ParameterMinYear(BaseParameter):
         return [*self.l_min_year]
 
     def get_dict_parameters(self):
-        return {self.name: self.l_min_year}
+        out_dict = dict()
+        for year in self.l_min_year:
+            out_dict[str(year)] = year
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -195,7 +211,10 @@ class ParameterMaxYear(BaseParameter):
         return [*self.l_max_year]
 
     def get_dict_parameters(self):
-        return {self.name: self.l_max_year}
+        out_dict = dict()
+        for year in self.l_max_year:
+            out_dict[str(year)] = year
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -217,10 +236,10 @@ class ParameterTransmission(BaseParameter):
     _f_arbitrary_arg = False
     # Допустимые значения
     manual = 1  # Механическая КП
-    automatic_hybrid = 5  # АКПП для гибридного авто
     automatic = 2  # АКПП
-    robotic = 4  # Робот
     vsd = 3  # Вариатор
+    robotic = 4  # Робот
+    automatic_hybrid = 5  # АКПП для гибридного авто
     # Не указана
     not_specified = -1
     # Имя
@@ -233,7 +252,15 @@ class ParameterTransmission(BaseParameter):
         return [self.manual, self.automatic_hybrid, self.automatic, self.robotic, self.vsd, self.not_specified]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Механическая КП': self.manual,
+            'АКПП': self.automatic,
+            'Вариатор': self.vsd,
+            'Роботизированная': self.robotic,
+            'АКПП для гибридного автомобиля': self.automatic_hybrid,
+            'Не указана': self.not_specified
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -273,7 +300,7 @@ class ParameterFuelType(BaseParameter):
     gasoline = 1  # Бензин
     diesel = 2  # Дизель
     electric = 4  # Электро
-    hybrid = 5  # Гибридн
+    hybrid = 5  # Гибрид
     hbo = 6  # ГБО
     # Имя
     name = 'fueltype'
@@ -285,7 +312,14 @@ class ParameterFuelType(BaseParameter):
         return [self.gasoline, self.diesel, self.electric, self.hybrid, self.hbo]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Бензин': self.gasoline,
+            'Дизель': self.diesel,
+            'Электричество': self.electric,
+            'Гибрид': self.hybrid,
+            'ГБО': self.hbo
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -315,7 +349,10 @@ class ParameterMinEngineCapacity(BaseParameter):
         return self.min_v
 
     def get_dict_parameters(self):
-        return {self.name: self.min_v}
+        out_dict = dict()
+        for v in self.min_v:
+            out_dict[str(v)] = v
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -345,7 +382,10 @@ class ParameterMaxEngineCapacity(BaseParameter):
         return self.max_v
 
     def get_dict_parameters(self):
-        return {self.name: self.max_v}
+        out_dict = dict()
+        for v in self.max_v:
+            out_dict[str(v)] = v
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -376,7 +416,12 @@ class ParameterWheelDrive(BaseParameter):
         return [self.front_wheel, self.back_wheel, self.wd_4]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Передний привод': self.front_wheel,
+            'Задний привод': self.back_wheel,
+            '4WD': self.wd_4
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -407,7 +452,10 @@ class ParameterUnsold(BaseParameter):
         return [self.unsold]
 
     def get_dict_parameters(self):
-        return {self.name: self.unsold}
+        out_dict = {
+            'Не проданные автомобили': self.unsold
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -438,7 +486,10 @@ class ParameterPhoto(BaseParameter):
         return [self.photo]
 
     def get_dict_parameters(self):
-        return {self.name: self.photo}
+        out_dict = {
+            'Объявления только с фото': self.photo
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -479,7 +530,20 @@ class ParameterFrameAuto(BaseParameter):
                 self.liftback, self.sedan, self.open, self.pickup]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Купе': self.coupe,
+            'Универсал': self.wagon,
+            '3х-дверный Хэтчбек': self.hatchback_3,
+            '5-дверный Хэтчбек': self.hatchback,
+            'Минивен': self.van,
+            '5-дверный Джип': self.suv,
+            '3х-дверный Джип': self.suv_3,
+            'Лифтбек': self.liftback,
+            'Седан': self.sedan,
+            'Кабриолет, родстер и тарга': self.open,
+            'Пикап': self.pickup
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -539,7 +603,25 @@ class ParameterColor(BaseParameter):
                 self.green, self.yellow, self.burgundy, self.white, self.beige, self.blue_2, self.pink, self.silver]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Черный': self.black,
+            'Фиолетовый': self.violet,
+            'Синий': self.blue,
+            'Серый': self.gray,
+            'Оранжевый': self.orange,
+            'Красный': self.red,
+            'Коричневый': self.brown,
+            'Золотистый': self.golden,
+            'Зеленый': self.green,
+            'Желтый': self.yellow,
+            'Бордовый': self.burgundy,
+            'Белый': self.white,
+            'Бежевый': self.beige,
+            'Голубой': self.blue_2,
+            'Розовый': self.pink,
+            'Серебристый': self.silver
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -569,7 +651,11 @@ class ParameterDocument(BaseParameter):
         return [self.problem, self.no_problem]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Документов нет или какие-то с ними проблемы': self.problem,
+            'С документами все в порядке': self.no_problem
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -599,7 +685,11 @@ class ParameterDamaged(BaseParameter):
         return [self.damaged, self.no_damaged]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Требуется ремонт': self.damaged,
+            'Не требуется ремонт': self.no_damaged
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -629,7 +719,11 @@ class ParameterHandDrive(BaseParameter):
         return [self.rhd, self.lhd]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Правый руль': self.rhd,
+            'Левый руль': self.lhd
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -659,7 +753,10 @@ class ParameterMinPower(BaseParameter):
         return [*self.min_power]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = dict()
+        for power in self.min_power:
+            out_dict[str(power)] = power
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -689,7 +786,10 @@ class ParameterMaxPower(BaseParameter):
         return [*self.max_power]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = dict()
+        for power in self.max_power:
+            out_dict[str(power)] = power
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -719,7 +819,10 @@ class ParameterMinMileage(BaseParameter):
         return self.min_mileage
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = dict()
+        for mileage in self.min_mileage:
+            out_dict[str(mileage)] = mileage
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -749,7 +852,10 @@ class ParameterMaxMileage(BaseParameter):
         return self.max_mileage
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = dict()
+        for mileage in self.max_mileage:
+            out_dict[str(mileage)] = mileage
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -779,7 +885,11 @@ class ParameterOwnerType(BaseParameter):
         return [self.individual, self.company]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Физическое лицо': self.individual,
+            'Юридическое лицо': self.company
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -808,7 +918,10 @@ class ParameterOwnerSells(BaseParameter):
         return [self.name]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Собственник': self.owner
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -837,7 +950,10 @@ class ParameterForeign(BaseParameter):
         return [self.foreign]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Иномарка': self.foreign
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -866,7 +982,10 @@ class ParameterReport(BaseParameter):
         return [self.report]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Объявление имеет отчет ГИБДД': self.report
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -895,7 +1014,10 @@ class ParameterDromAssist(BaseParameter):
         return [self.assist]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Объявление проверено ДРОМ-ассистентом': self.assist
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -924,7 +1046,10 @@ class ParameterCert(BaseParameter):
         return [self.cert]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Автомобиль сертифицирован': self.cert
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -953,7 +1078,10 @@ class ParameterTrade(BaseParameter):
         return [self.trade]
 
     def get_dict_parameters(self):
-        return {self.name: self.get_list_parameters()}
+        out_dict = {
+            'Продавец готов к обмену': self.trade
+        }
+        return out_dict
 
     def is_more_arg(self):
         return self._f_more_arg
@@ -988,4 +1116,3 @@ class ParameterDontMileage(BaseParameter):
 
     def is_arbitrary_arg(self):
         return self._f_arbitrary_arg
-
