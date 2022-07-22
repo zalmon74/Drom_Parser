@@ -483,7 +483,7 @@ class DromParser:
                                                 class_=FULL_DESCRIPTION_CLASS_CSS_OBJ_PARAMETER_SETTING)
                 description = description.find(DESCRIPTION_TAG_OBJ_PARAMETER_SETTING,
                                                class_=DESCRIPTION_CLASS_CSS_OBJ_PARAMETER_SETTING).text
-            except AttributeError:
+            except (AttributeError, ValueError):
                 description = MESSAGE_OUTPUT_DESCRIPTION
             # Получаем ссылки на фото
             photos = []
@@ -494,31 +494,31 @@ class DromParser:
                 for obj_photo in lst_obj_photos:
                     if isinstance(obj_photo, bs4_Tag) and obj_photo.name == PHOTO_TAG_OBJ_PARAMETER_SETTING:
                         photos.append(obj_photo[PHOTO_LINK_PARAMETER_SETTING])
-            except AttributeError:
+            except (AttributeError, ValueError):
                 photos = MESSAGE_OUTPUT_PHOTOS
             # Описание двигателя
             try:
                 engine = soup_obj_ads.find(ENGINE_TAG_OBJ_PARAMETER_SETTING,
                                            text=ENGINE_TEXT_PARAMETER_SETTING).next_sibling.next_sibling.text
-            except AttributeError:
+            except (AttributeError, ValueError):
                 engine = MESSAGE_OUTPUT_ENGINE
             # Мощность
             try:
                 power = int(soup_obj_ads.find(POWER_TAG_OBJ_PARAMETER_SETTING,
                                               text=POWER_TEXT_PARAMETER_SETTING).next_sibling.text.split()[0])
-            except AttributeError:
+            except (AttributeError, ValueError):
                 power = MESSAGE_OUTPUT_POWER
             # Коробка передач
             try:
                 transmission = soup_obj_ads.find(TRANSMISSION_TAG_OBJ_PARAMETER_SETTING,
                                                  text=TRANSMISSION_TEXT_PARAMETER_SETTING).next_sibling.text
-            except AttributeError:
+            except (AttributeError, ValueError):
                 transmission = MESSAGE_OUTPUT_TRANSMISSION
             # Цвет
             try:
                 color = soup_obj_ads.find(COLOR_TAG_OBJ_PARAMETER_SETTING,
                                           text=COLOR_TEXT_PARAMETER_SETTING).next_sibling.text
-            except AttributeError:
+            except (AttributeError, ValueError):
                 color = MESSAGE_OUTPUT_COLOR
             # Пробег
             try:
@@ -528,13 +528,13 @@ class DromParser:
                 # Избовляемся от Юникода
                 mileage = mileage.encode('ascii', 'ignore')
                 mileage = int(mileage.decode())
-            except AttributeError:
+            except (AttributeError, ValueError):
                 mileage = MESSAGE_OUTPUT_MILEAGE
             # Расположение руля
             try:
                 hand_drive = soup_obj_ads.find(HAND_DRIVE_TAG_OBJ_PARAMETER_SETTING,
                                                text=HAND_DRIVE_TEXT_PARAMETER_SETTING).next_sibling.text
-            except AttributeError:
+            except (AttributeError, ValueError):
                 hand_drive = MESSAGE_OUTPUT_HAND_DRIVE
         else:
             description = MESSAGE_OUTPUT_DESCRIPTION
@@ -555,7 +555,7 @@ class DromParser:
         try:
             desc_price = input_obj.find(DESC_PRICE_TAG_OBJ_PARAMETER_SETTING,
                                         class_=DESC_PRICE_CLASS_CSS_OBJ_PARAMETER_SETTING).text
-        except AttributeError:
+        except (AttributeError, ValueError):
             desc_price = MESSAGE_OUTPUT_DESC_PRICE
         # Определяем город авто
         city = input_obj.find(CITY_TAG_OBJ_PARAMETER_SETTING, class_=CITY_CLASS_CSS_OBJ_PARAMETER_SETTING).text
@@ -620,7 +620,8 @@ class DromParser:
         output = None
         # Каждое объявление имеет css class = ADS_CLASS_CSS_OBJ_PARAMETER_SETTING По нему и будем фильтровать данные
         # на странице
-        l_ads = self.soup_obj.find_all(ADS_TAG_OBJ_PARAMETER_SETTING, class_=ADS_CLASS_CSS_OBJ_PARAMETER_SETTING)
+        l_ads = self.soup_obj.find_all(ADS_TAG_OBJ_PARAMETER_SETTING,
+                                       {ADS_NAME_OBJ_PARAMETER_SETTING: ADS_DATA_OBJ_PARAMETER_SETTING})
         if l_ads:
             output = dict()
         num_ads = 0

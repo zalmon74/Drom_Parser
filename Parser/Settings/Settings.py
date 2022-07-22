@@ -40,8 +40,11 @@ TITLE_DATA_OBJ_PARAMETER_SETTING = 'bull_title'
 # Объявление на странице
 ADS_TAG_OBJ_PARAMETER_SETTING = 'a'  # Тэг для поиска объекта с объявлением
 # CSS класс для получения всех объектов с объявлением
-ADS_CLASS_CSS_OBJ_PARAMETER_SETTING = 'css-5l099z ewrty961'
+ADS_CLASS_CSS_OBJ_PARAMETER_SETTING = 'css-1dlmvcl ewrty961'
 ADS_LINK_PARAMETER_SETTING = 'href'  # Значение, чтобы вытащить ссылку с объявлением
+# Имя и значение поля для поиска на странице объекта с названием объявления
+ADS_NAME_OBJ_PARAMETER_SETTING = 'data-ftid'
+ADS_DATA_OBJ_PARAMETER_SETTING = 'bulls-list_bull'
 
 # Параметр "Описание авто"
 FULL_DESCRIPTION_TAG_OBJ_PARAMETER_SETTING = 'div'  # Тэг для получения объекта с полным описанием объявления
