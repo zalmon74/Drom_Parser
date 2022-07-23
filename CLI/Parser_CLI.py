@@ -1,3 +1,11 @@
+from pathlib import Path
+import sys
+
+# Добавляем в путь сбора модуль с параметрами
+path_root = Path(__file__).parents[0]
+sys.path.append(str(path_root))
+
+
 import json
 import csv
 from os import system
